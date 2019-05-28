@@ -35,3 +35,5 @@ def ansatz(params, num_layers):
         pq += layer(params[10*i:10*i+10])
     ro = pq.declare('ro', 'BIT', 5)
     return pq
+
+    

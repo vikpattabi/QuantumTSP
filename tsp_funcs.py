@@ -27,10 +27,13 @@ def check_Us(units):
     for item in units:
         print(is_unitary(item))
 
-def combine_unitaries(units):
+# TODO: normalize the edge weights such that the maximum path length
+# cannot exceed 2*pi
+def normalize_path_lengths(adj_matrix):
     pass
 
-adj = read_in_graph('./data/graph_0.txt')
-B = construct_B_matrix(adj)
-units = construct_unitaries(B)
-check_Us(units)
+
+# adj = read_in_graph('./data/graph_0.txt')
+# B = construct_B_matrix(adj)
+# units = construct_unitaries(B)
+# check_Us(units)
