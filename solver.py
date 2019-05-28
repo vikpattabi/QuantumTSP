@@ -7,6 +7,10 @@ import numpy as np
 
 qvm = QVMConnection()
 
+# Currently contains my VQE implementation from Project 2
+# TODO: Implement the full TSP solver
+# TODO: Implement quick evaluation of TSP solutions to sample data
+
 def solve_vqe(hamiltonian: PauliSum) -> float:
     # Construct a variational quantum eigensolver solution to find the lowest
     # eigenvalue of the given hamiltonian
