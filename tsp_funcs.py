@@ -7,6 +7,7 @@ def read_in_graph(path):
 
 def construct_B_matrix(adj_matrix):
     B = np.exp(1j * adj_matrix)
+    # print(B)
     return B
 
 def construct_unitaries(B):

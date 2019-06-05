@@ -63,6 +63,7 @@ def run_solver(path, eigenstate, noise=False):
     for output in res:
         exp_res = ''.join([str(i) for i in output])
         outputs.append(exp_res)
+    print(res)
 
     return most_common(outputs)
 
@@ -70,14 +71,14 @@ def most_common(arr):
     return max(set(arr), key=arr.count)
 
 def gen_eigenstates(n):
-    
-    return None
+    pass
 
 def main():
   print("Running QuantumTSP Solver: \n")
   start = time.time()
-  res = run_solver('./data/graph_0.txt', '10001000')
+  res = run_solver('./data/graph_from_paper.txt', '10001000')
   length = time.time() - start
+  print(res)
   print("Time (s): %f" % length)
 
 if __name__== "__main__":

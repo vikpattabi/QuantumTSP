@@ -28,4 +28,17 @@ def write_data():
         print('Writing to file: ' + name)
         nx.write_weighted_edgelist(G, name)
 
-write_data()
+def write_graph_from_paper():
+    A = np.array([
+        [0, np.pi/2, np.pi/8, np.pi/4],
+        [np.pi/2, 0, np.pi/4, np.pi/4],
+        [np.pi/8, np.pi/4, 0, np.pi/8],
+        [np.pi/4, np.pi/4, np.pi/8, 0]
+    ])
+    G = nx.from_numpy_matrix(A)
+
+    name = './data/graph_from_paper.txt'
+    print('Writing to file: ' + name)
+    nx.write_weighted_edgelist(G, name)
+
+write_graph_from_paper()
