@@ -10,6 +10,7 @@ qvm = QVMConnection()
 
 n_eigen_qbs = 8
 n_qft_qbs = 6
+n_trials=10
 
 def construct_full_solver(filename, eigenstate):
     units=pipeline_unitaries(filename)
@@ -40,7 +41,8 @@ def construct_full_solver(filename, eigenstate):
 
     return pq
 
-def run_solver(pq):
+def run_solver(path, eigenstate):
+    pq = construct_full_solver(path, eigenstate)
     gates = Program()
     # Define necessary gates
     declaration, CUJ = def_CUj()
@@ -50,16 +52,21 @@ def run_solver(pq):
 
     pq = gates + address_qubits(pq)
     # print(pq)
-    res = qvm.run(pq)
-    #
-    exp_res = ''.join([str(i) for i in res[0]])
-    return exp_res
+    res = qvm.run(pq, trials=n_trials)
 
+    outputs = []
+    for output in res:
+        exp_res = ''.join([str(i) for i in output])
+        outputs.append(exp_res)
+
+    return most_common(outputs)
+
+def most_common(arr):
+    return max(set(arr), key=arr.count)
 
 def main():
   print("Running QuantumTSP Solver: \n")
-  pq = construct_full_solver('./data/graph_0.txt', '10001000')
-  res = run_solver(pq)
+  res = run_solver('./data/graph_0.txt', '10001000')
   print(res)
 
 if __name__== "__main__":
