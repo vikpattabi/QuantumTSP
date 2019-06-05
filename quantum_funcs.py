@@ -1,12 +1,11 @@
-from pyquil.quil import Program, address_qubits, DefGate
-from pyquil.api import QVMConnection
+from pyquil.quil import Program, DefGate
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
 from pyquil.gates import H
 from pyquil.parameters import Parameter, quil_exp
 
 
-def define_CUj():
+def def_CUj():
     a = Parameter('a') # a is naturally in the form of e^(ia) as it comes from the B matrix
     b = Parameter('b')
     c = Parameter('c')
@@ -58,17 +57,18 @@ def def_controlled_rk():
     return gate_definition.get_constructor()
 
 # Length of placeholders is the number of qubits we are approximating (should be 6)
-def inverse_qft(n, CRK):
+def inverse_qft(placeholders, CRK):
+    n = len(placeholders)
     pq = Program()
     for i in range(n):
-        pq += H(i)
+        pq += H(placeholders[i])
         for j in range(2, n - i + 1):
-            pq += CRK(j)(i+j-1, i)
+            pq += CRK(j)(placeholders[i+j-1], placeholders[i])
     return pq
 
-CRK = def_controlled_rk()
-pq = inverse_qft(6, CRK)
-print(pq)
+# CRK = def_controlled_rk()
+# pq = inverse_qft(6, CRK)
+# print(pq)
 
 #
 # Previous attempt at defining U gates, drawing directly from IBM QASM u1 native gate definitions
