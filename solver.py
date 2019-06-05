@@ -41,11 +41,18 @@ def construct_full_solver(filename, eigenstate):
     return pq
 
 def run_solver(pq):
-    pass
+    pq = address_qubits(pq)
+    res = qvm.run(pq)
+
+    exp_res = [str(i) for i in res].join('')
+    return exp_res
+
 
 def main():
   print("Hello World!")
   pq = construct_full_solver('./data/graph_0.txt', '10001000')
+  res = run_solver(pq)
+  print(res)
 
 if __name__== "__main__":
   main()
