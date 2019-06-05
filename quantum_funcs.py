@@ -12,6 +12,7 @@ def setup_qpe(qubits):
     return pq
 
 def def_CUj():
+    pq = Program()
     a = Parameter('a') # a is naturally in the form of e^(ia) as it comes from the B matrix
     b = Parameter('b')
     c = Parameter('c')
@@ -26,9 +27,10 @@ def def_CUj():
         [0, 0, 0, 0, 0, 0, c, 0],
         [0, 0, 0, 0, 0, 0, 0, d]
     ])
-    gate_def = DefGate('CUJ', cu, [a, b, c, d])
-    return gate_def.get_constructor()
-
+    cuj =  DefGate('CUJ', cu, [a, b, c, d])
+    constructor = cuj.get_constructor()
+    pq += cuj
+    return pq, constructor
 # Constructs U, the tensor product of each U_j in the j controlled unitaries
 def construct_U(placeholders, CUj, unitaries):
     pq = Program()
@@ -55,6 +57,7 @@ def construct_U_to_power(placeholders, CUj, unitaries, power):
     return pq
 
 def def_controlled_rk():
+    pq = Program()
     k = Parameter('k')
     crk = np.array([
         [1, 0, 0, 0],
@@ -62,8 +65,10 @@ def def_controlled_rk():
         [0, 0, 1, 0],
         [0, 0, 0, quil_exp((-2*np.pi*1j)/2**k)]
     ])
-    gate_definition = DefGate('CRK', crk, [k])
-    return gate_definition.get_constructor()
+    crk =  DefGate('CRK', crk, [k])
+    constructor = crk.get_constructor()
+    pq += crk
+    return pq, constructor
 
 # Length of placeholders is the number of qubits we are approximating (should be 6)
 def inverse_qft(placeholders, CRK):

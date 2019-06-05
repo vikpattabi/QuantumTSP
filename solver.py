@@ -8,10 +8,6 @@ from pyquil.gates import H, MEASURE
 
 qvm = QVMConnection()
 
-# Define necessary gates
-CUJ = def_CUj()
-CRK = def_controlled_rk()
-
 n_eigen_qbs = 8
 n_qft_qbs = 6
 
@@ -26,6 +22,10 @@ def construct_full_solver(filename, eigenstate):
     pq = Program()
     ro = pq.declare('ro', 'BIT', n_qft_qbs)
 
+    # Define necessary gates
+    declaration, CUJ = def_CUj()
+    declaration, CRK = def_controlled_rk()
+
     pq += setup_eigenstate(eigen_qbs, eigenstate)
     pq += setup_qpe(qft_qbs)
 
@@ -36,20 +36,28 @@ def construct_full_solver(filename, eigenstate):
     # Add QFT
     pq += inverse_qft(qft_qbs, CRK)
     for i in range(n_qft_qbs):
-        pq += MEASURE(i, ro[i])
+        pq += MEASURE(qft_qbs[i], ro[i])
 
     return pq
 
 def run_solver(pq):
-    pq = address_qubits(pq)
-    res = qvm.run(pq)
+    gates = Program()
+    # Define necessary gates
+    declaration, CUJ = def_CUj()
+    gates += declaration
+    declaration, CRK = def_controlled_rk()
+    gates += declaration
 
-    exp_res = [str(i) for i in res].join('')
+    pq = gates + address_qubits(pq)
+    # print(pq)
+    res = qvm.run(pq)
+    #
+    exp_res = ''.join([str(i) for i in res[0]])
     return exp_res
 
 
 def main():
-  print("Hello World!")
+  print("Running QuantumTSP Solver: \n")
   pq = construct_full_solver('./data/graph_0.txt', '10001000')
   res = run_solver(pq)
   print(res)
