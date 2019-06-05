@@ -1,8 +1,9 @@
-from pyquil.quil import Program, address_qubits
+from pyquil.quil import Program, address_qubits, DefGate
 from pyquil.api import QVMConnection
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
 from pyquil.gates import H
+from pyquil.parameters import Parameter, quil_exp
 
 
 def define_CUj():
@@ -51,27 +52,22 @@ def def_controlled_rk():
         [1, 0, 0, 0],
         [0, 1, 0, 0],
         [0, 0, 1, 0],
-        [0, 0, 0, exp((-2*np.pi*1j)/2**k)]
+        [0, 0, 0, quil_exp((-2*np.pi*1j)/2**k)]
     ])
     gate_definition = DefGate('CRK', crk, [k])
     return gate_definition.get_constructor()
 
 # Length of placeholders is the number of qubits we are approximating (should be 6)
-def inverse_qft(placeholders, CRK):
-    n = len(placeholders)
+def inverse_qft(n, CRK):
     pq = Program()
     for i in range(n):
-        pq += H(placeholders[i])
-        for j in range(i+1, n + 1)
-            pq += CRK(j)(j, i)
+        pq += H(i)
+        for j in range(2, n - i + 1):
+            pq += CRK(j)(i+j-1, i)
     return pq
 
 CRK = def_controlled_rk()
-qb = []
-for i in range(6):
-    qb.push(QubitPlaceholder())
-pq = inverse_qft([], CRK)
-pq = address_qubits(pq)
+pq = inverse_qft(6, CRK)
 print(pq)
 
 #
