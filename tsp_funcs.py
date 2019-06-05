@@ -32,6 +32,9 @@ def check_Us(units):
 def normalize_path_lengths(adj_matrix):
     pass
 
+def pipeline_unitaries(path):
+    return (construct_unitaries(construct_B_matrix(read_in_graph(path))))
+
 
 # adj = read_in_graph('./data/graph_0.txt')
 # B = construct_B_matrix(adj)
