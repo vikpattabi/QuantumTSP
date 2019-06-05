@@ -27,10 +27,6 @@ def check_Us(units):
     for item in units:
         print(is_unitary(item))
 
-# TODO: normalize the edge weights such that the maximum path length
-# cannot exceed 2*pi
-def normalize_path_lengths(adj_matrix):
-    pass
 
 def pipeline_unitaries(path):
     return (construct_unitaries(construct_B_matrix(read_in_graph(path))))
