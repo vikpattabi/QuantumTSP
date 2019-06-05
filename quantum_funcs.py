@@ -1,7 +1,9 @@
-from pyquil.quil import Program
+from pyquil.quil import Program, address_qubits
 from pyquil.api import QVMConnection
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
+from pyquil.gates import H
+
 
 def define_CUj():
     a = Parameter('a') # a is naturally in the form of e^(ia) as it comes from the B matrix
@@ -43,7 +45,34 @@ def construct_U_to_power(placeholders, CUj, unitaries, power):
         pq += pq
     return pq
 
+def def_controlled_rk():
+    k = Parameter('k')
+    crk = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, exp((-2*np.pi*1j)/2**k)]
+    ])
+    gate_definition = DefGate('CRK', crk, [k])
+    return gate_definition.get_constructor()
 
+# Length of placeholders is the number of qubits we are approximating (should be 6)
+def inverse_qft(placeholders, CRK):
+    n = len(placeholders)
+    pq = Program()
+    for i in range(n):
+        pq += H(placeholders[i])
+        for j in range(i+1, n + 1)
+            pq += CRK(j)(j, i)
+    return pq
+
+CRK = def_controlled_rk()
+qb = []
+for i in range(6):
+    qb.push(QubitPlaceholder())
+pq = inverse_qft([], CRK)
+pq = address_qubits(pq)
+print(pq)
 
 #
 # Previous attempt at defining U gates, drawing directly from IBM QASM u1 native gate definitions
