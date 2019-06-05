@@ -5,6 +5,8 @@ from pyquil.api import QVMConnection
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
 from pyquil.gates import H, MEASURE
+from pyquil.noise import add_decoherence_noise
+import time
 
 qvm = QVMConnection()
 
@@ -41,7 +43,7 @@ def construct_full_solver(filename, eigenstate):
 
     return pq
 
-def run_solver(path, eigenstate):
+def run_solver(path, eigenstate, noise=False):
     pq = construct_full_solver(path, eigenstate)
     gates = Program()
     # Define necessary gates
@@ -51,9 +53,12 @@ def run_solver(path, eigenstate):
     gates += declaration
 
     pq = gates + address_qubits(pq)
+
+    if noise:
+        print("Adding built-in decoherence noise not possible due to gate set.")
+        # pq = add_decoherence_noise(pq)
     # print(pq)
     res = qvm.run(pq, trials=n_trials)
-
     outputs = []
     for output in res:
         exp_res = ''.join([str(i) for i in output])
@@ -64,10 +69,16 @@ def run_solver(path, eigenstate):
 def most_common(arr):
     return max(set(arr), key=arr.count)
 
+def gen_eigenstates(n):
+    
+    return None
+
 def main():
   print("Running QuantumTSP Solver: \n")
+  start = time.time()
   res = run_solver('./data/graph_0.txt', '10001000')
-  print(res)
+  length = time.time() - start
+  print("Time (s): %f" % length)
 
 if __name__== "__main__":
   main()
