@@ -5,7 +5,9 @@ from pyquil.api import QVMConnection
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
 from pyquil.gates import H, MEASURE
-from pyquil.noise import add_decoherence_noise
+# from pyquil.noise import add_decoherence_noise
+import networkx as nx
+import matplotlib.pyplot as plt
 import time
 
 qvm = QVMConnection()
@@ -66,7 +68,6 @@ def run_solver(path, eigenstate, noise=False):
     if noise:
         print("Adding built-in decoherence noise not possible due to gate set.")
         # pq = add_decoherence_noise(pq)
-    # print(pq)
     res = qvm.run(pq, trials=n_trials)
     outputs = []
     for output in res:
@@ -109,15 +110,23 @@ def construct_soln_table(in_map):
     keys = in_map.keys()
     tups = [(key, in_map[key]) for key in keys]
     sorted_arr = sorted(tups, key=lambda tup: int(tup[1], 2))
-    winner = sorted_arr[0]
+    winner = sorted_arr[0][0]
+    print('')
     print('Eigenstate | Ordering | Result | Result as int')
     for item in sorted_arr:
         print('%s   | %s     | %s | %d' % (item[0], eigen_to_node_name(item[0]), item[1], int(item[1], 2)))
     print('')
     return winner
 
-def highlight_best_route():
-    pass
+def highlight_best_route(route, file):
+    path = eigen_to_node_name(route)
+    G = nx.read_weighted_edgelist(file)
+    pos = nx.spring_layout(G)
+    nx.draw(G, pos=pos)
+    nx.draw_networkx_edge_labels(G, pos=pos)
+    edgelist = [(path[i], path[(i+1) % 4]) for i in range(len(path))]
+    nx.draw_networkx_edges(G, pos=pos, edgelist = edgelist, width=8, edge_color='r')
+    plt.show()
 
 def main():
   print("Running QuantumTSP Solver: \n")
@@ -125,8 +134,6 @@ def main():
   start = time.time()
   res = run_solver_for_all_eigenstates(path)
   length = time.time() - start
-  print(res)
-  print('')
   winner = construct_soln_table(res)
   print("Time (s): %f" % length)
   highlight_best_route(winner, path)

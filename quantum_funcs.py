@@ -95,7 +95,8 @@ def setup_eigenstate(placeholders, state):
 # eigenstate = '100101'
 # pq = setup_eigenstate(qbs, eigenstate)
 # print(pq)
-
-# CRK = def_controlled_rk()
-# pq = inverse_qft(6, CRK)
+# 
+# pq, CRK = def_controlled_rk()
+# placeholders = [QubitPlaceholder() for i in range(6)]
+# pq = inverse_qft(placeholders, CRK)
 # print(pq)
