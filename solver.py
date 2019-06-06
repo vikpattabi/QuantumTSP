@@ -12,7 +12,16 @@ qvm = QVMConnection()
 
 n_eigen_qbs = 8
 n_qft_qbs = 6
-n_trials=10
+n_trials=1
+
+EIGENSTATES = [
+    '1230',
+    '1203',
+    '1302',
+    '1320',
+    '1023',
+    '1032'
+]
 
 def construct_full_solver(filename, eigenstate):
     units=pipeline_unitaries(filename)
@@ -63,23 +72,64 @@ def run_solver(path, eigenstate, noise=False):
     for output in res:
         exp_res = ''.join([str(i) for i in output])
         outputs.append(exp_res)
-    print(res)
+    # print(res)
 
     return most_common(outputs)
 
 def most_common(arr):
     return max(set(arr), key=arr.count)
 
-def gen_eigenstates(n):
+# Converts eigenstates to binary representation (for setting up qubits)
+def gen_eigenstates():
+    states = []
+    for e in EIGENSTATES:
+        bin_str = ''
+        for num in e:
+            bin_str += bin(int(num))[2:].zfill(2)
+        states.append(bin_str)
+    return states
+
+def run_solver_for_all_eigenstates(path):
+    res = {}
+    eigens = gen_eigenstates()
+    for e in eigens:
+        print("Solving for " + e)
+        res[e] = run_solver(path, e)
+    print("Done!")
+    return res
+
+def eigen_to_node_name(bit_str):
+    output = ''
+    for i in range(0, len(bit_str), 2):
+        curr = bit_str[i: i+2]
+        output += str(int(curr, 2))
+    return output
+
+def construct_soln_table(in_map):
+    keys = in_map.keys()
+    tups = [(key, in_map[key]) for key in keys]
+    sorted_arr = sorted(tups, key=lambda tup: int(tup[1], 2))
+    winner = sorted_arr[0]
+    print('Eigenstate | Ordering | Result | Result as int')
+    for item in sorted_arr:
+        print('%s   | %s     | %s | %d' % (item[0], eigen_to_node_name(item[0]), item[1], int(item[1], 2)))
+    print('')
+    return winner
+
+def highlight_best_route():
     pass
 
 def main():
   print("Running QuantumTSP Solver: \n")
+  path = './data/graph_0.txt'
   start = time.time()
-  res = run_solver('./data/graph_from_paper.txt', '10001000')
+  res = run_solver_for_all_eigenstates(path)
   length = time.time() - start
   print(res)
+  print('')
+  winner = construct_soln_table(res)
   print("Time (s): %f" % length)
+  highlight_best_route(winner, path)
 
 if __name__== "__main__":
   main()
