@@ -1,7 +1,7 @@
 from quantum_funcs import *
 from tsp_funcs import *
 from pyquil.quil import Program, address_qubits
-from pyquil.api import QVMConnection
+from pyquil.api import QVMConnection, get_qc, QVMCompiler
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
 from pyquil.gates import H, MEASURE
@@ -12,6 +12,8 @@ import time
 import sys
 
 qvm = QVMConnection()
+qc = get_qc("16q-qvm")
+compiler = QVMCompiler('tcp://localhost:5555', qc.device, timeout=60)
 
 n_eigen_qbs = 8
 n_qft_qbs = 6
@@ -25,6 +27,10 @@ EIGENSTATES = [
     '1023',
     '1032'
 ]
+
+help_msg = '\nUsage instructions for the Quantum TSP solver: \n' \
+            '-------------------------------------------------------\n'\
+            '-Call \'python solver.py [filename]\' to execute the solver on a given graph.\n'
 
 def construct_full_solver(filename, eigenstate):
     units=pipeline_unitaries(filename)
@@ -66,9 +72,17 @@ def run_solver(path, eigenstate, noise=False):
 
     pq = gates + address_qubits(pq)
 
+    ep = None
     if noise:
-        print("Adding built-in decoherence noise not possible due to gate set.")
+        print('Unable to add noise due to timeout in compilation.')
+        # print('Compiling program into natural gate set.')
+        # ep = qc.compile(pq)
+        # print('Finished compiling.')
+        # print(ep.program)
         # pq = add_decoherence_noise(pq)
+        res = compiler.quil_to_native_quil(to_compile)
+        print(res)
+    pq = pq if (ep == None) else ep.program
     res = qvm.run(pq, trials=n_trials)
     outputs = []
     for output in res:
@@ -96,7 +110,7 @@ def run_solver_for_all_eigenstates(path):
     eigens = gen_eigenstates()
     for e in eigens:
         print("Solving for " + e)
-        res[e] = run_solver(path, e)
+        res[e] = run_solver(path, e, noise=False)
     print("Done!")
     return res
 
@@ -129,11 +143,23 @@ def highlight_best_route(route, file):
     nx.draw_networkx_edges(G, pos=pos, edgelist = edgelist, width=8, edge_color='r')
     plt.show()
 
+def get_args():
+    n_args = len(sys.argv) - 1
+    if n_args < 1:
+        raise Exception('Enter a graph file to run TSP.')
+    elif n_args > 1:
+        raise Exception('Too many arguments entered.')
+    if (sys.argv[1] == '--help'):
+        print(help_msg)
+        return False
+    return sys.argv[1]
+
 def main():
-  print("Running QuantumTSP Solver: \n")
-  print(sys.path)
-  path = './data/graph_0.txt'
+  path = get_args()
+  if not path:
+      return
   start = time.time()
+  print("Running QuantumTSP Solver: \n")
   res = run_solver_for_all_eigenstates(path)
   length = time.time() - start
   winner = construct_soln_table(res)
