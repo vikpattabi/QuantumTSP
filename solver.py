@@ -9,6 +9,7 @@ from pyquil.gates import H, MEASURE
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
+import sys
 
 qvm = QVMConnection()
 
@@ -130,6 +131,7 @@ def highlight_best_route(route, file):
 
 def main():
   print("Running QuantumTSP Solver: \n")
+  print(sys.path)
   path = './data/graph_0.txt'
   start = time.time()
   res = run_solver_for_all_eigenstates(path)
