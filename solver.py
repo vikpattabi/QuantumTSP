@@ -32,16 +32,11 @@ help_msg = '\nUsage instructions for the Quantum TSP solver: \n' \
             '-------------------------------------------------------\n'\
             '-Call \'python solver.py [filename]\' to execute the solver on a given graph.\n'
 
-def construct_full_solver(filename, eigenstate):
+def construct_full_solver(filename, eigenstate, eigen_qbs, qft_qbs, ro, iter_num=None):
     units=pipeline_unitaries(filename)
-
-    # Declare placeholders
-    eigen_qbs = [QubitPlaceholder() for i in range(n_eigen_qbs)] # Confirm
-    qft_qbs = [QubitPlaceholder() for i in range(n_qft_qbs)]
 
     # Sum up program
     pq = Program()
-    ro = pq.declare('ro', 'BIT', n_qft_qbs)
 
     # Define necessary gates
     declaration, CUJ = def_CUj()
@@ -56,13 +51,50 @@ def construct_full_solver(filename, eigenstate):
 
     # Add QFT
     pq += inverse_qft(qft_qbs, CRK)
+
+    # For determining where to measure qbs depending on iterated or fully quantum implementation
     for i in range(n_qft_qbs):
-        pq += MEASURE(qft_qbs[i], ro[i])
+        if(iter_num):
+            pq += MEASURE(qft_qbs[i], ro[iter_num*n_qft_qbs + i])
+        else:
+            pq += MEASURE(qft_qbs[i], ro[i])
 
     return pq
 
+def run_solver_quantum(path, eigenstates):
+    gates = Program()
+    declaration, CUJ = def_CUj()
+    gates += declaration
+    declaration, CRK = def_controlled_rk()
+    gates += declaration
+
+    pq = Program()
+
+    # Declare placeholders
+    eigen_qbs = [QubitPlaceholder() for i in range(n_eigen_qbs)] # Confirm
+    qft_qbs = [QubitPlaceholder() for i in range(n_qft_qbs)]
+
+    ro = pq.declare('ro', 'BIT', n_qft_qbs*len(EIGENSTATES))
+    for i, e in enumerate(eigenstates):
+        pq += construct_full_solver(path, e, eigen_qbs, qft_qbs, ro, iter_num = i)
+        pq.reset()
+    pq = gates + address_qubits(pq)
+    res = qvm.run(pq, trials=n_trials)
+    res = np.array_split(res[0], len(EIGENSTATES))
+
+    output = {}
+    for i, elem in enumerate(res):
+        output[gen_eigenstate(EIGENSTATES[i])] = ''.join([str(c) for c in elem])
+    return output
+
 def run_solver(path, eigenstate, noise=False):
-    pq = construct_full_solver(path, eigenstate)
+    # Declare placeholders
+    eigen_qbs = [QubitPlaceholder() for i in range(n_eigen_qbs)] # Confirm
+    qft_qbs = [QubitPlaceholder() for i in range(n_qft_qbs)]
+
+    pq = Program()
+    ro = pq.declare('ro', 'BIT', n_qft_qbs)
+    pq += construct_full_solver(path, eigenstate, eigen_qbs, qft_qbs, ro)
     gates = Program()
     # Define necessary gates
     declaration, CUJ = def_CUj()
@@ -72,7 +104,7 @@ def run_solver(path, eigenstate, noise=False):
 
     pq = gates + address_qubits(pq)
 
-    ep = None
+    # ep = None
     if noise:
         print('Unable to add noise due to timeout in compilation.')
         # to_compile = Program() + RZ(np.pi, 0)
@@ -84,7 +116,7 @@ def run_solver(path, eigenstate, noise=False):
         # pq = add_decoherence_noise(pq)
         # res = compiler.quil_to_native_quil(to_compile)
         # print(res)
-    pq = pq if (ep == None) else ep.program
+    # pq = pq if (ep == None) else ep.program
     res = qvm.run(pq, trials=n_trials)
     outputs = []
     for output in res:
@@ -101,18 +133,25 @@ def most_common(arr):
 def gen_eigenstates():
     states = []
     for e in EIGENSTATES:
-        bin_str = ''
-        for num in e:
-            bin_str += bin(int(num))[2:].zfill(2)
+        bin_str = gen_eigenstate(e)
         states.append(bin_str)
     return states
 
-def run_solver_for_all_eigenstates(path):
+def gen_eigenstate(e):
+    bin_str = ''
+    for num in e:
+        bin_str += bin(int(num))[2:].zfill(2)
+    return bin_str
+
+def run_solver_for_all_eigenstates(path, fq = False):
     res = {}
     eigens = gen_eigenstates()
-    for e in eigens:
-        print("Solving for " + e)
-        res[e] = run_solver(path, e, noise=True)
+    if fq:
+        res = run_solver_quantum(path, eigens)
+    else:
+        for e in eigens:
+            print("Solving for " + e)
+            res[e] = run_solver(path, e, noise=False)
     print("Done!")
     return res
 
@@ -140,33 +179,34 @@ def highlight_best_route(route, file):
     G = nx.read_weighted_edgelist(file)
     pos = nx.spring_layout(G)
     nx.draw(G, pos=pos)
-    nx.draw_networkx_edge_labels(G, pos=pos)
+    nx.draw_networkx_edge_labels(G, pos=pos, with_labels=True)
     edgelist = [(path[i], path[(i+1) % 4]) for i in range(len(path))]
     nx.draw_networkx_edges(G, pos=pos, edgelist = edgelist, width=8, edge_color='r')
     plt.show()
 
 def get_args():
-    n_args = len(sys.argv) - 1
-    if n_args < 1:
-        raise Exception('Enter a graph file to run TSP.')
-    elif n_args > 1:
-        raise Exception('Too many arguments entered.')
     if (sys.argv[1] == '--help'):
         print(help_msg)
         return False
-    return sys.argv[1]
+
+    n_args = len(sys.argv) - 1
+    if n_args < 1:
+        raise Exception('Enter a graph file to run TSP.')
+    fq = True if n_args >= 2 and sys.argv[2] == '--fully_quantum' else False
+    return sys.argv[1], fq
 
 def main():
-  path = get_args()
-  if not path:
+  args = get_args()
+  if not args:
       return
+  path, fq = args
   start = time.time()
   print("Running QuantumTSP Solver: \n")
-  res = run_solver_for_all_eigenstates(path)
+  res = run_solver_for_all_eigenstates(path, fq=fq)
   length = time.time() - start
   winner = construct_soln_table(res)
   print("Time (s): %f" % length)
-  highlight_best_route(winner, path)
+  # highlight_best_route(winner, path)
 
 if __name__== "__main__":
   main()

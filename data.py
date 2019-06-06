@@ -1,13 +1,17 @@
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 MAX_EDGE_WEIGHT = np.pi/2
 
 
-help_msg = '\nUsage instructions for the Quantum TSP solver: \n' \
+help_msg = '\nUsage instructions for the data.py Quantum TSP solver: \n' \
             '-------------------------------------------------------\n'\
-            '-Call \'python solver.py [filename]\' to execute the solver on a given graph.\n'
+            '-Call \'python data.py --view_graph [filename]\' to view a networkx visualization of a given graph.\n'\
+            '-Call \'python data.py --write_graph [filename]\' to write a random graph for testing. Edge weights will be'\
+            'picked so as to normalize the maximum path length to be less than 2*pi.'
+
 
 def write_data(path):
     G = nx.Graph()
@@ -34,7 +38,7 @@ def write_data(path):
 def view_graph(path):
     G = nx.read_weighted_edgelist(path)
     pos = nx.spring_layout(G)
-    nx.draw(G, pos=pos)
+    nx.draw(G, pos=pos, with_labels=True)
     nx.draw_networkx_edge_labels(G, pos=pos)
     plt.show()
 
@@ -59,12 +63,12 @@ def get_args():
         print(help_msg)
         return False
     if sys.argv[1] == '--write_graph':
-        if n_args !== 2:
+        if n_args != 2:
             raise Exception('Program takes input [fn name] [path, optional]')
         path = sys.argv[2]
         return (True, path)
     elif sys.argv[1] == '--view_graph':
-        if n_args !== 2:
+        if n_args != 2:
             raise Exception('Program takes input [fn name] [path, optional]')
         path = sys.argv[2]
         return (False, path)
@@ -72,13 +76,13 @@ def get_args():
 
 def main():
   path = get_args()
+  if not path:
+      return
   if len(path) == 2:
       if path[0]:
           write_data(path[1])
       else:
-          disp_graph(path[1])
-  if not path:
-      return
+          view_graph(path[1])
 
 if __name__== "__main__":
   main()
