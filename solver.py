@@ -4,7 +4,7 @@ from pyquil.quil import Program, address_qubits
 from pyquil.api import QVMConnection, get_qc, QVMCompiler
 import numpy as np
 from pyquil.quilatom import QubitPlaceholder
-from pyquil.gates import H, MEASURE
+from pyquil.gates import H, MEASURE, RZ
 # from pyquil.noise import add_decoherence_noise
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -75,13 +75,15 @@ def run_solver(path, eigenstate, noise=False):
     ep = None
     if noise:
         print('Unable to add noise due to timeout in compilation.')
+        # to_compile = Program() + RZ(np.pi, 0)
+        # print(to_compile)
         # print('Compiling program into natural gate set.')
         # ep = qc.compile(pq)
         # print('Finished compiling.')
         # print(ep.program)
         # pq = add_decoherence_noise(pq)
-        res = compiler.quil_to_native_quil(to_compile)
-        print(res)
+        # res = compiler.quil_to_native_quil(to_compile)
+        # print(res)
     pq = pq if (ep == None) else ep.program
     res = qvm.run(pq, trials=n_trials)
     outputs = []
@@ -110,7 +112,7 @@ def run_solver_for_all_eigenstates(path):
     eigens = gen_eigenstates()
     for e in eigens:
         print("Solving for " + e)
-        res[e] = run_solver(path, e, noise=False)
+        res[e] = run_solver(path, e, noise=True)
     print("Done!")
     return res
 
