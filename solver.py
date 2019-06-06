@@ -30,7 +30,12 @@ EIGENSTATES = [
 
 help_msg = '\nUsage instructions for the Quantum TSP solver: \n' \
             '-------------------------------------------------------\n'\
-            '-Call \'python solver.py [filename]\' to execute the solver on a given graph.\n'
+            '-Call \'python solver.py\' to execute the solver on the sample graph from displayed in the paper.\n'\
+            '-Use the following flags to change program behavior.\n'\
+            '       - \'--print_quil\' to display the aggregated quil program in the console.\n'\
+            '       - \'--fully_quantum\' to run a fully quantum version of the algorithm, which requires more classical memory but less qvm calls.\n'\
+            '       - \'--graph=[filename]\' to run the solver on a specified file formatted as a networkx weighted edgelist.\n'\
+
 
 def construct_full_solver(filename, eigenstate, eigen_qbs, qft_qbs, ro, iter_num=None):
     units=pipeline_unitaries(filename)
@@ -61,7 +66,7 @@ def construct_full_solver(filename, eigenstate, eigen_qbs, qft_qbs, ro, iter_num
 
     return pq
 
-def run_solver_quantum(path, eigenstates):
+def run_solver_quantum(path, eigenstates, to_print):
     gates = Program()
     declaration, CUJ = def_CUj()
     gates += declaration
@@ -79,6 +84,12 @@ def run_solver_quantum(path, eigenstates):
         pq += construct_full_solver(path, e, eigen_qbs, qft_qbs, ro, iter_num = i)
         pq.reset()
     pq = gates + address_qubits(pq)
+
+    if to_print:
+        print('Printing QUIL code for sample eigenstate:')
+        print('-------------------------')
+        print(pq)
+
     res = qvm.run(pq, trials=n_trials)
     res = np.array_split(res[0], len(EIGENSTATES))
 
@@ -87,7 +98,7 @@ def run_solver_quantum(path, eigenstates):
         output[gen_eigenstate(EIGENSTATES[i])] = ''.join([str(c) for c in elem])
     return output
 
-def run_solver(path, eigenstate, noise=False):
+def run_solver(path, eigenstate, to_print, noise=False):
     # Declare placeholders
     eigen_qbs = [QubitPlaceholder() for i in range(n_eigen_qbs)] # Confirm
     qft_qbs = [QubitPlaceholder() for i in range(n_qft_qbs)]
@@ -103,6 +114,11 @@ def run_solver(path, eigenstate, noise=False):
     gates += declaration
 
     pq = gates + address_qubits(pq)
+
+    if to_print:
+        print('Printing QUIL code for sample eigenstate:')
+        print('-------------------------')
+        print(pq)
 
     # ep = None
     if noise:
@@ -143,15 +159,16 @@ def gen_eigenstate(e):
         bin_str += bin(int(num))[2:].zfill(2)
     return bin_str
 
-def run_solver_for_all_eigenstates(path, fq = False):
+def run_solver_for_all_eigenstates(path, fq = False, to_print=False):
     res = {}
     eigens = gen_eigenstates()
     if fq:
-        res = run_solver_quantum(path, eigens)
+        res = run_solver_quantum(path, eigens, to_print)
     else:
         for e in eigens:
             print("Solving for " + e)
-            res[e] = run_solver(path, e, noise=False)
+            res[e] = run_solver(path, e, to_print, noise=False)
+            to_print = False
     print("Done!")
     return res
 
@@ -185,28 +202,32 @@ def highlight_best_route(route, file):
     plt.show()
 
 def get_args():
-    if (sys.argv[1] == '--help'):
+    n_args = len(sys.argv) - 1
+    if (sys.argv[1] == '--help' and n_args == 1):
         print(help_msg)
         return False
 
-    n_args = len(sys.argv) - 1
-    if n_args < 1:
-        raise Exception('Enter a graph file to run TSP.')
-    fq = True if n_args >= 2 and sys.argv[2] == '--fully_quantum' else False
-    return sys.argv[1], fq
+    args = set(sys.argv[1:])
+    path = 'data/graph_from_paper.txt'
+    fq = True if '--fully_quantum' in args else False
+    to_print = True if '--print_quil' in args else False
+    for s in args:
+        if '--graph=' in s:
+            path = s.replace('--graph=', '')
+    return path, fq, to_print
 
 def main():
   args = get_args()
   if not args:
       return
-  path, fq = args
+  path, fq, to_print = args
   start = time.time()
   print("Running QuantumTSP Solver: \n")
-  res = run_solver_for_all_eigenstates(path, fq=fq)
+  res = run_solver_for_all_eigenstates(path, fq=fq, to_print=to_print)
   length = time.time() - start
   winner = construct_soln_table(res)
   print("Time (s): %f" % length)
-  # highlight_best_route(winner, path)
+  highlight_best_route(winner, path)
 
 if __name__== "__main__":
   main()
