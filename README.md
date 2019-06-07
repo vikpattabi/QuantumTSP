@@ -8,9 +8,8 @@ Required packages include Python 3.7, pyQuil, networkx, matplotlib, and numpy. I
 <br/>
 # How to use this Project
 This project features a number of files designed to implement a Quantum Phase Estimation approach to solving the Traveling Salesman Problem. The core file is __solver.py__ which implements functions from __tsp_funcs.py__ and __quantum_funcs.py__. Another file, __data.py__, allows the user to visualize saves networks and randomly generate new (already normalized) networks on which to test.
-<br/>
-<br/>
-__solver.py__
+
+## solver.py
 <br/>
 <br/>
 Calling __python solver.py__ executes the basic version of the TSP solver. Various flags can be added to change the solver behavior, and they can be viewed by calling __python solver.py --help__. Specifically, they are:
@@ -21,9 +20,8 @@ Calling __python solver.py__ executes the basic version of the TSP solver. Vario
 <br/>
 <br/>
 Although not modifiable via an external flag, changing the 'verbose' parameter of construct_soln_table in this file's main function will turn on/off the solver's tabular printing of results after computing the phases.
-<br/>
-<br/>
-**data.py**
+
+## data.py
 <br/> 
 <br/>
 This program is useful for visualizing test graphs and generating new random test graphs. Running __python data.py --help__ will display information on how to use the flags for this file which should be intuitive. 
