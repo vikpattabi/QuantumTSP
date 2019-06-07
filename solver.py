@@ -229,29 +229,32 @@ def get_args():
     fq = True if '--fully_quantum' in args else False
     to_print = True if '--print_quil' in args else False
     num_trials=1
+    verbose=False
     for s in args:
         if '--graph=' in s:
             path = s.replace('--graph=', '')
         if '--num_trials=' in s:
             num_trials=int(s.replace('--num_trials=', ''))
-    return path, fq, to_print, num_trials
+        if s == '--verbose':
+            verbose=True
+    return path, fq, to_print, num_trials, verbose
 
 def main():
   args = get_args()
   if not args:
       return
-  path, fq, to_print, sample_size = args
+  path, fq, to_print, sample_size, verbose = args
   start = time.time()
   num_correct = 0
   print("Running QuantumTSP Solver: \n")
   for i in range(sample_size):
       res = run_solver_for_all_eigenstates(path, fq=fq, to_print=to_print)
-      winner, correct = construct_soln_table(res, path) # Can change 'verbose' input to remove prints
+      winner, correct = construct_soln_table(res, path, verbose=verbose) # Can change 'verbose' input to remove prints
       num_correct += correct
   length = time.time() - start
   print("Time (s): %f" % length)
   print('%d of %d correct solutions.' % (num_correct, sample_size))
-  #highlight_best_route(winner, path)
+  #highlight_best_route(winner, path) # Uncomment to visualize best route solution (only is sample_size == 1)
 
 if __name__== "__main__":
   main()
