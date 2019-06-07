@@ -35,6 +35,7 @@ help_msg = '\nUsage instructions for the Quantum TSP solver: \n' \
             '       - \'--print_quil\' to display the aggregated quil program in the console.\n'\
             '       - \'--fully_quantum\' to run a fully quantum version of the algorithm, which requires more classical memory but less qvm calls.\n'\
             '       - \'--graph=[filename]\' to run the solver on a specified file formatted as a networkx weighted edgelist.\n'\
+            '       - \'--num_trials=[int]\' to run the solver [int] times on a given graph and assess its accuracy.\n'\
 
 
 def construct_full_solver(filename, eigenstate, eigen_qbs, qft_qbs, ro, iter_num=None):
@@ -179,17 +180,33 @@ def eigen_to_node_name(bit_str):
         output += str(int(curr, 2))
     return output
 
-def construct_soln_table(in_map):
+def actual_path_length(edgelist, graph):
+    sum = 0
+    for item in edgelist:
+        sum += graph.get_edge_data(item[0], item[1])['weight']
+    return sum
+
+def construct_soln_table(in_map, filename, verbose=True):
+    G = nx.read_weighted_edgelist(filename)
     keys = in_map.keys()
     tups = [(key, in_map[key]) for key in keys]
     sorted_arr = sorted(tups, key=lambda tup: int(tup[1], 2))
     winner = sorted_arr[0][0]
-    print('')
-    print('Eigenstate | Ordering | Result | Result as int')
-    for item in sorted_arr:
-        print('%s   | %s     | %s | %d' % (item[0], eigen_to_node_name(item[0]), item[1], int(item[1], 2)))
-    print('')
-    return winner
+    if verbose:
+        print('')
+        print('Eigenstate | Ordering | Result | Result as | Actual path length')
+    lowest = None
+    lengths = set()
+    for i, item in enumerate(sorted_arr):
+        path = eigen_to_node_name(item[0])
+        edgelist = [(path[i], path[(i+1) % 4]) for i in range(len(path))]
+        actual_length = actual_path_length(edgelist, G)
+        lengths.add(actual_length)
+        if i == 0: lowest = actual_length
+        if verbose: print('%s   | %s     | %s | %d         | %f' % (item[0], eigen_to_node_name(item[0]), item[1], int(item[1], 2), actual_length))
+    if verbose: print('')
+    correct = 1 if lowest == min(lengths) else 0
+    return winner, correct
 
 def highlight_best_route(route, file):
     path = eigen_to_node_name(route)
@@ -203,7 +220,7 @@ def highlight_best_route(route, file):
 
 def get_args():
     n_args = len(sys.argv) - 1
-    if (sys.argv[1] == '--help' and n_args == 1):
+    if (n_args == 1 and sys.argv[1] == '--help'):
         print(help_msg)
         return False
 
@@ -211,23 +228,30 @@ def get_args():
     path = 'data/graph_from_paper.txt'
     fq = True if '--fully_quantum' in args else False
     to_print = True if '--print_quil' in args else False
+    num_trials=1
     for s in args:
         if '--graph=' in s:
             path = s.replace('--graph=', '')
-    return path, fq, to_print
+        if '--num_trials=' in s:
+            num_trials=int(s.replace('--num_trials=', ''))
+    return path, fq, to_print, num_trials
 
 def main():
   args = get_args()
   if not args:
       return
-  path, fq, to_print = args
+  path, fq, to_print, sample_size = args
   start = time.time()
+  num_correct = 0
   print("Running QuantumTSP Solver: \n")
-  res = run_solver_for_all_eigenstates(path, fq=fq, to_print=to_print)
+  for i in range(sample_size):
+      res = run_solver_for_all_eigenstates(path, fq=fq, to_print=to_print)
+      winner, correct = construct_soln_table(res, path) # Can change 'verbose' input to remove prints
+      num_correct += correct
   length = time.time() - start
-  winner = construct_soln_table(res)
   print("Time (s): %f" % length)
-  highlight_best_route(winner, path)
+  print('%d of %d correct solutions.' % (num_correct, sample_size))
+  #highlight_best_route(winner, path)
 
 if __name__== "__main__":
   main()

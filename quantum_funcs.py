@@ -63,7 +63,7 @@ def def_controlled_rk():
         [1, 0, 0, 0],
         [0, 1, 0, 0],
         [0, 0, 1, 0],
-        [0, 0, 0, quil_exp((-2*np.pi*1j)/2**k)]
+        [0, 0, 0, quil_exp((2*np.pi*1j)/2**k)]
     ])
     crk =  DefGate('CRK', crk, [k])
     constructor = crk.get_constructor()
@@ -95,7 +95,7 @@ def setup_eigenstate(placeholders, state):
 # eigenstate = '100101'
 # pq = setup_eigenstate(qbs, eigenstate)
 # print(pq)
-# 
+#
 # pq, CRK = def_controlled_rk()
 # placeholders = [QubitPlaceholder() for i in range(6)]
 # pq = inverse_qft(placeholders, CRK)
