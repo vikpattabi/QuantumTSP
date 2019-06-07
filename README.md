@@ -20,5 +20,9 @@ Calling __python solver.py__ executes the basic version of the TSP solver. Vario
 Although not modifiable via an external flag, changing the 'verbose' parameter of construct_soln_table in this file's main function will turn on/off the solver's tabular printing of results after computing the phases.
 
 ## data.py
-This program is useful for visualizing test graphs and generating new random test graphs. Running __python data.py --help__ will display information on how to use the flags for this file which should be intuitive. 
+This program is useful for visualizing test graphs and generating new random test graphs. Running __python data.py --help__ will display information on how to use the flags for this file. 
+
+## Acknowledgements
+Thank you to the CS269Q course staff for teaching a great course and to Rigetti for providing the tools necessary to run this demo. 
+
 
