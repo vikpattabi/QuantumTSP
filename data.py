@@ -10,7 +10,7 @@ help_msg = '\nUsage instructions for the data.py Quantum TSP solver: \n' \
             '-------------------------------------------------------\n'\
             '-Call \'python data.py --view_graph [filename]\' to view a networkx visualization of a given graph.\n'\
             '-Call \'python data.py --write_graph [filename]\' to write a random graph for testing. Edge weights will be'\
-            'picked so as to normalize the maximum path length to be less than 2*pi.'
+            'picked so as to normalize the maximum path length to be less than 2*pi.\n'
 
 
 def write_data(path):
