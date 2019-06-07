@@ -16,7 +16,6 @@ Calling __python solver.py__ executes the basic version of the TSP solver. Vario
 * __--graph=[filename]__ runs the solver on a specified graph relative to the current path. The referenced file should be a .txt containing the results of writing a graph via networkx.write_weighted_edgelist. If this is not called, the default graph is __data/graph_from_paper.txt__
 * __--num_trials=[int]__ runs the solver for [int] times on the specified graph and prints the results of this accuracy testing. The default for this value is 1. 
 <br/>
-<br/>
 Although not modifiable via an external flag, changing the 'verbose' parameter of construct_soln_table in this file's main function will turn on/off the solver's tabular printing of results after computing the phases.
 
 ### data.py
